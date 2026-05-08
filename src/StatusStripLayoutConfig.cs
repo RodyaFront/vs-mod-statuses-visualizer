@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IO;
 using Vintagestory.API.Client;
 using Vintagestory.API.Common;
@@ -75,7 +75,7 @@ public class StatusStripLayoutConfig
     /// <summary>
     /// When false (default) and <see cref="DialogArea"/> is a right-edge HUD anchor (RightTop, RightMiddle, RightBottom, RightFixed)
     /// with <see cref="StatusStripSide"/> Left, the icon row is flush to the anchor's trailing (screen-right) edge.
-    /// When true, restores legacy placement: row ends at the anchor's leading edge, leaving an empty band тЙИ anchor width (old &quot;mug slot&quot; geometry).
+    /// When true, restores legacy placement: row ends at the anchor's leading edge, leaving an empty band ≈ anchor width (old &quot;mug slot&quot; geometry).
     /// </summary>
     public bool StatusStripUseLegacyLeadingEdgeRow { get; set; }
 

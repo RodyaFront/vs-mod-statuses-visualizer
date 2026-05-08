@@ -133,25 +133,209 @@ public sealed class StripLayoutWizardDialog : GuiDialog
 
     public override string? ToggleKeyCombinationCode => null;
 
+    private struct LayoutFlow
+    {
+        public LayoutFlow(double x, double y, double width)
+        {
+            X = x;
+            Y = y;
+            Width = width;
+        }
+
+        public readonly double X;
+        public double Y;
+        public readonly double Width;
+
+        public ElementBounds Take(double height)
+        {
+            ElementBounds bounds = ElementBounds.Fixed(X, Y, Width, height);
+            Y += height;
+            return bounds;
+        }
+
+        public void Gap(double gap)
+        {
+            Y += gap;
+        }
+    }
+
+    private readonly struct HeaderSectionLayout
+    {
+        public HeaderSectionLayout(ElementBounds intro)
+        {
+            Intro = intro;
+        }
+
+        public ElementBounds Intro { get; }
+    }
+
+    private readonly struct FormSectionLayout
+    {
+        public FormSectionLayout(
+            ElementBounds secLayout,
+            ElementBounds lblCorner,
+            ElementBounds ddCorner,
+            ElementBounds lblInset,
+            ElementBounds ddInset,
+            ElementBounds secAppearance,
+            ElementBounds lblIcon,
+            ElementBounds ddIcon,
+            ElementBounds lblGap,
+            ElementBounds ddGap)
+        {
+            SectionLayout = secLayout;
+            LabelCorner = lblCorner;
+            DropDownCorner = ddCorner;
+            LabelInset = lblInset;
+            DropDownInset = ddInset;
+            SectionAppearance = secAppearance;
+            LabelIcon = lblIcon;
+            DropDownIcon = ddIcon;
+            LabelGap = lblGap;
+            DropDownGap = ddGap;
+        }
+
+        public ElementBounds SectionLayout { get; }
+        public ElementBounds LabelCorner { get; }
+        public ElementBounds DropDownCorner { get; }
+        public ElementBounds LabelInset { get; }
+        public ElementBounds DropDownInset { get; }
+        public ElementBounds SectionAppearance { get; }
+        public ElementBounds LabelIcon { get; }
+        public ElementBounds DropDownIcon { get; }
+        public ElementBounds LabelGap { get; }
+        public ElementBounds DropDownGap { get; }
+    }
+
+    private readonly struct TipSectionLayout
+    {
+        public TipSectionLayout(ElementBounds footer)
+        {
+            Footer = footer;
+        }
+
+        public ElementBounds Footer { get; }
+    }
+
+    private readonly struct ActionsSectionLayout
+    {
+        public ActionsSectionLayout(ElementBounds apply, ElementBounds skip)
+        {
+            Apply = apply;
+            Skip = skip;
+        }
+
+        public ElementBounds Apply { get; }
+        public ElementBounds Skip { get; }
+    }
+
+    private static double EstimateAutoTextHeight(string text, double minHeight)
+    {
+        int lines = Math.Max(1, text.Replace("\r\n", "\n").Split('\n').Length);
+        return Math.Max(minHeight, lines * 18 + 18);
+    }
+
+    private static HeaderSectionLayout LayoutHeaderSection(ref LayoutFlow flow, double introHeight, double bottomGap)
+    {
+        ElementBounds intro = flow.Take(introHeight);
+        flow.Gap(bottomGap);
+        return new HeaderSectionLayout(intro);
+    }
+
+    private static FormSectionLayout LayoutFormSection(
+        ref LayoutFlow flow,
+        double sectionTitleHeight,
+        double rowHeight,
+        double rowGap,
+        double sectionGap,
+        double labelWidth,
+        double dropDownGap)
+    {
+        double ddWidth = flow.Width - labelWidth - dropDownGap;
+        ElementBounds secLayout = flow.Take(sectionTitleHeight);
+        flow.Gap(6);
+
+        ElementBounds lblCorner = ElementBounds.Fixed(flow.X, flow.Y, labelWidth, rowHeight);
+        ElementBounds ddCorner = ElementBounds.Fixed(flow.X + labelWidth + dropDownGap, flow.Y, ddWidth, rowHeight);
+        flow.Gap(rowHeight + rowGap);
+
+        ElementBounds lblInset = ElementBounds.Fixed(flow.X, flow.Y, labelWidth, rowHeight);
+        ElementBounds ddInset = ElementBounds.Fixed(flow.X + labelWidth + dropDownGap, flow.Y, ddWidth, rowHeight);
+        flow.Gap(rowHeight + sectionGap);
+
+        ElementBounds secAppearance = flow.Take(sectionTitleHeight);
+        flow.Gap(6);
+
+        ElementBounds lblIcon = ElementBounds.Fixed(flow.X, flow.Y, labelWidth, rowHeight);
+        ElementBounds ddIcon = ElementBounds.Fixed(flow.X + labelWidth + dropDownGap, flow.Y, ddWidth, rowHeight);
+        flow.Gap(rowHeight + rowGap);
+
+        ElementBounds lblGap = ElementBounds.Fixed(flow.X, flow.Y, labelWidth, rowHeight);
+        ElementBounds ddGap = ElementBounds.Fixed(flow.X + labelWidth + dropDownGap, flow.Y, ddWidth, rowHeight);
+        flow.Gap(rowHeight);
+
+        return new FormSectionLayout(
+            secLayout,
+            lblCorner,
+            ddCorner,
+            lblInset,
+            ddInset,
+            secAppearance,
+            lblIcon,
+            ddIcon,
+            lblGap,
+            ddGap);
+    }
+
+    private static TipSectionLayout LayoutTipSection(ref LayoutFlow flow, double tipTopPad, double footerHeight)
+    {
+        flow.Gap(tipTopPad);
+        ElementBounds footer = flow.Take(footerHeight);
+        return new TipSectionLayout(footer);
+    }
+
+    private static ActionsSectionLayout LayoutActionsSection(
+        ref LayoutFlow flow,
+        double topGap,
+        double rowHeight,
+        double buttonGap)
+    {
+        flow.Gap(topGap);
+        double buttonWidth = (flow.Width - buttonGap) / 2;
+        ElementBounds apply = ElementBounds.Fixed(flow.X, flow.Y, buttonWidth, rowHeight);
+        ElementBounds skip = ElementBounds.Fixed(flow.X + buttonWidth + buttonGap, flow.Y, buttonWidth, rowHeight);
+        flow.Gap(rowHeight);
+        return new ActionsSectionLayout(apply, skip);
+    }
+
     private void SetupDialog()
     {
         const double dialogW = 390;
         const double secTitleH = 22;
-        const double introH = 118;
-        const double beforeLayoutPad = 16;
-        const double footerH = 96;
         const double btnRowH = 34;
         const double bottomPad = 20;
-        double rowH = 28;
-        double g = 6;
-        double secGap = 10;
+        const double rowH = 28;
+        const double rowGap = 6;
+        const double secGap = 10;
+        const double headerBottomGap = 16;
+        const double tipTopPad = 36;
+        const double actionsTopGap = 10;
+        const double buttonGap = 8;
+        const double dropDownGap = 8;
+        const double labelW = 128;
         double t = GuiStyle.TitleBarHeight;
         double pad = GuiStyle.ElementToDialogPadding;
         double textWidth = dialogW - 2 * pad;
-        double labelW = 128;
-        double ddW = textWidth - labelW - 8;
-        double dialogH = t + 8 + introH + secGap + beforeLayoutPad + secTitleH + 6 + rowH + g + rowH + secGap
-            + secTitleH + 6 + rowH + g + rowH + 12 + footerH + 10 + btnRowH + bottomPad;
+        string introText = Lang.Get("playerstatusstrip:wizard-intro");
+        string footerText = Lang.Get("playerstatusstrip:wizard-footer-hint");
+        double introH = EstimateAutoTextHeight(introText, 96);
+        double footerH = EstimateAutoTextHeight(footerText, 72);
+        LayoutFlow flow = new(pad, t + 8, textWidth);
+        HeaderSectionLayout header = LayoutHeaderSection(ref flow, introH, headerBottomGap);
+        FormSectionLayout form = LayoutFormSection(ref flow, secTitleH, rowH, rowGap, secGap, labelW, dropDownGap);
+        TipSectionLayout tip = LayoutTipSection(ref flow, tipTopPad, footerH);
+        ActionsSectionLayout actions = LayoutActionsSection(ref flow, actionsTopGap, btnRowH, buttonGap);
+        double dialogH = flow.Y + bottomPad;
 
         ElementBounds dialogBounds = ElementBounds.Fixed(EnumDialogArea.CenterMiddle, 0, 0, dialogW, dialogH);
         ElementBounds bgBounds = ElementBounds.Fill;
@@ -161,64 +345,34 @@ public sealed class StripLayoutWizardDialog : GuiDialog
         CairoFont footerHintFont = CairoFont.WhiteSmallText()
             .WithWeight(FontWeight.Bold)
             .WithColor(new double[] { 1.0, 0.82, 0.38, 1.0 });
-        double nx = pad;
-        double ny = t + 8;
-
-        ElementBounds intro = ElementBounds.Fixed(nx, ny, textWidth, introH);
-        ny += introH + secGap + beforeLayoutPad;
-
-        ElementBounds secLayout = ElementBounds.Fixed(nx, ny, textWidth, secTitleH);
-        ny += secTitleH + 6;
-        ElementBounds lblCorner = ElementBounds.Fixed(nx, ny, labelW, rowH);
-        ElementBounds ddCorner = ElementBounds.Fixed(nx + labelW + 8, ny, ddW, rowH);
-        ny += rowH + g;
-        ElementBounds lblInset = ElementBounds.Fixed(nx, ny, labelW, rowH);
-        ElementBounds ddInset = ElementBounds.Fixed(nx + labelW + 8, ny, ddW, rowH);
-        ny += rowH + secGap;
-
-        ElementBounds secAppearance = ElementBounds.Fixed(nx, ny, textWidth, secTitleH);
-        ny += secTitleH + 6;
-        ElementBounds lblIcon = ElementBounds.Fixed(nx, ny, labelW, rowH);
-        ElementBounds ddIcon = ElementBounds.Fixed(nx + labelW + 8, ny, ddW, rowH);
-        ny += rowH + g;
-        ElementBounds lblGap = ElementBounds.Fixed(nx, ny, labelW, rowH);
-        ElementBounds ddGap = ElementBounds.Fixed(nx + labelW + 8, ny, ddW, rowH);
-        ny += rowH + 12;
-
-        ElementBounds footer = ElementBounds.Fixed(nx, ny, textWidth, footerH);
-        ny += footerH + 10;
-        double btnGap = 8;
-        double btnW = (textWidth - btnGap) / 2;
-        ElementBounds btnApply = ElementBounds.Fixed(nx, ny, btnW, btnRowH);
-        ElementBounds btnSkip = ElementBounds.Fixed(nx + btnW + btnGap, ny, btnW, btnRowH);
 
         SingleComposer = capi.Gui
             .CreateCompo("playerstatusstrip-layout-wizard", dialogBounds)
             .AddShadedDialogBG(bgBounds)
             .AddDialogTitleBar(Lang.Get("playerstatusstrip:wizard-title"), OnTitleClose)
-            .AddStaticTextAutoBoxSize(Lang.Get("playerstatusstrip:wizard-intro"), introFooterFont, EnumTextOrientation.Left, intro)
-            .AddStaticText(Lang.Get("playerstatusstrip:wizard-section-layout"), sectionFont, secLayout)
-            .AddStaticText(Lang.Get("playerstatusstrip:wizard-label-corner"), labelFont, lblCorner)
-            .AddDropDown(_areaCodes, _areaDisplay, _areaIndex, OnAreaCodeSelected, ddCorner, CairoFont.WhiteSmallText(), "areaDd")
-            .AddStaticText(Lang.Get("playerstatusstrip:wizard-label-inset"), labelFont, lblInset)
-            .AddDropDown(_insetCodes, _insetDisplay, _insetPresetIndex, OnInsetPresetSelected, ddInset, CairoFont.WhiteSmallText(), "insetDd")
-            .AddStaticText(Lang.Get("playerstatusstrip:wizard-section-appearance"), sectionFont, secAppearance)
-            .AddStaticText(Lang.Get("playerstatusstrip:wizard-label-icon-preset"), labelFont, lblIcon)
-            .AddDropDown(_iconCodes, _iconDisplay, _iconPresetIndex, OnIconPresetSelected, ddIcon, CairoFont.WhiteSmallText(), "iconDd")
-            .AddStaticText(Lang.Get("playerstatusstrip:wizard-label-gap-preset"), labelFont, lblGap)
-            .AddDropDown(_gapCodes, _gapDisplay, _gapPresetIndex, OnGapPresetSelected, ddGap, CairoFont.WhiteSmallText(), "gapDd")
-            .AddStaticTextAutoBoxSize(Lang.Get("playerstatusstrip:wizard-footer-hint"), footerHintFont, EnumTextOrientation.Left, footer)
+            .AddStaticTextAutoBoxSize(introText, introFooterFont, EnumTextOrientation.Left, header.Intro)
+            .AddStaticText(Lang.Get("playerstatusstrip:wizard-section-layout"), sectionFont, form.SectionLayout)
+            .AddStaticText(Lang.Get("playerstatusstrip:wizard-label-corner"), labelFont, form.LabelCorner)
+            .AddDropDown(_areaCodes, _areaDisplay, _areaIndex, OnAreaCodeSelected, form.DropDownCorner, CairoFont.WhiteSmallText(), "areaDd")
+            .AddStaticText(Lang.Get("playerstatusstrip:wizard-label-inset"), labelFont, form.LabelInset)
+            .AddDropDown(_insetCodes, _insetDisplay, _insetPresetIndex, OnInsetPresetSelected, form.DropDownInset, CairoFont.WhiteSmallText(), "insetDd")
+            .AddStaticText(Lang.Get("playerstatusstrip:wizard-section-appearance"), sectionFont, form.SectionAppearance)
+            .AddStaticText(Lang.Get("playerstatusstrip:wizard-label-icon-preset"), labelFont, form.LabelIcon)
+            .AddDropDown(_iconCodes, _iconDisplay, _iconPresetIndex, OnIconPresetSelected, form.DropDownIcon, CairoFont.WhiteSmallText(), "iconDd")
+            .AddStaticText(Lang.Get("playerstatusstrip:wizard-label-gap-preset"), labelFont, form.LabelGap)
+            .AddDropDown(_gapCodes, _gapDisplay, _gapPresetIndex, OnGapPresetSelected, form.DropDownGap, CairoFont.WhiteSmallText(), "gapDd")
+            .AddStaticTextAutoBoxSize(footerText, footerHintFont, EnumTextOrientation.Left, tip.Footer)
             .AddButton(
                 Lang.Get("playerstatusstrip:wizard-apply"),
                 OnApplyClicked,
-                btnApply,
+                actions.Apply,
                 CairoFont.WhiteSmallText().WithOrientation(EnumTextOrientation.Center),
                 EnumButtonStyle.Normal,
                 "btnApply")
             .AddButton(
                 Lang.Get("playerstatusstrip:wizard-not-now"),
                 OnSkipClicked,
-                btnSkip,
+                actions.Skip,
                 CairoFont.WhiteSmallText().WithOrientation(EnumTextOrientation.Center),
                 EnumButtonStyle.Small,
                 "btnSkip")

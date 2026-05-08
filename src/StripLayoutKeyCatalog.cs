@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 
 namespace PlayerStatusStrip;
 
@@ -40,5 +40,5 @@ internal static class StripLayoutKeyCatalog
     };
 
     internal const string AnimBlocksNote =
-        "Nested objects NeutralAnim, PositiveAnim, NegativeAnim (Enabled, durations, ShakePx, SlideDownPx, тАж) are only in JSON; use ModConfig file or editor.";
+        "Nested objects NeutralAnim, PositiveAnim, NegativeAnim (Enabled, durations, ShakePx, SlideDownPx, …) are only in JSON; use ModConfig file or editor.";
 }

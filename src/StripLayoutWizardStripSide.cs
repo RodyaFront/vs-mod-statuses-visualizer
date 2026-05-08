@@ -1,10 +1,10 @@
-﻿using System;
+using System;
 
 namespace PlayerStatusStrip;
 
 /// <summary>
 /// Picks <see cref="StatusStripLayoutConfig.StatusStripSide"/> so the icon row stays on-screen for the chosen HUD anchor.
-/// With <c>Left</c>, the row grows to the left of the anchor; with <c>Right</c>, to the right тАФ see <see cref="StatusStripLayoutMath"/>.
+/// With <c>Left</c>, the row grows to the left of the anchor; with <c>Right</c>, to the right — see <see cref="StatusStripLayoutMath"/>.
 /// </summary>
 internal static class StripLayoutWizardStripSide
 {

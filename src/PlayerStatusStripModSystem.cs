@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Globalization;
 using System.Reflection;
 using System.Text;
@@ -207,7 +207,7 @@ public class PlayerStatusStripModSystem : ModSystem
                 }
             };
             api.Event.OnSendChatMessage += _stripMockOutgoingChat;
-            api.Logger.Notification("[Player Status HUD] Dev: chat /stripmock or .stripmock (list | run <id> | stop), or plain .stripmock тАж in message box.");
+            api.Logger.Notification("[Player Status HUD] Dev: chat /stripmock or .stripmock (list | run <id> | stop), or plain .stripmock … in message box.");
         }
 
         _hud = new StatusStripHudElement(api, _api);
@@ -578,7 +578,7 @@ public class PlayerStatusStripModSystem : ModSystem
 
     private void ShowStripLayoutKeyList()
     {
-        NotifyStripMock("Player Status HUD тАФ layout keys (get/set):");
+        NotifyStripMock("Player Status HUD — layout keys (get/set):");
         int n = 0;
         StringBuilder chunk = new();
         foreach (StripLayoutKeyCatalog.Entry e in StripLayoutKeyCatalog.ChatEditableKeys)

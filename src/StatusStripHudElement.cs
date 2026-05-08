@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Cairo;
 using Vintagestory.API.Client;
@@ -117,7 +117,7 @@ public sealed class StatusStripHudElement : HudElement
         }
     }
 
-    private static void TopAlignedSpriteRect(
+    private static void CenterAnchoredScaledSpriteRect(
         double cellLeft,
         double cellTop,
         int cellSize,
@@ -127,8 +127,9 @@ public sealed class StatusStripHudElement : HudElement
         out double spriteSide)
     {
         spriteSide = cellSize * pose.Scale;
-        spriteLeft = cellLeft + pose.Dx + (cellSize - spriteSide) * 0.5;
-        spriteTop = cellTop + pose.Dy;
+        double inset = (cellSize - spriteSide) * 0.5;
+        spriteLeft = cellLeft + pose.Dx + inset;
+        spriteTop = cellTop + pose.Dy + inset;
     }
 
     internal StatusStripHudElement(ICoreClientAPI capi, StatusStripHudApi api)
@@ -139,7 +140,7 @@ public sealed class StatusStripHudElement : HudElement
         ComposeHud();
     }
 
-    internal void ReloadLayoutFromDisk()
+    internal void ReloadLayoutFromDisk(bool showLayoutSummaryChat = true)
     {
         _layout = StatusStripLayoutConfig.Reload(capi);
         ComposeHud();
@@ -147,14 +148,14 @@ public sealed class StatusStripHudElement : HudElement
 
         if (TryOpen() != true)
         {
-            capi.Logger.Warning("[Player Status Strip] HUD TryOpen failed after layout reload (F8).");
+            capi.Logger.Warning("[Player Status HUD] HUD TryOpen failed after layout reload (F8).");
         }
 
-        if (capi.World is IClientWorldAccessor w && w.Player != null)
+        if (showLayoutSummaryChat && capi.World is IClientWorldAccessor w && w.Player != null)
         {
             _layout.EnsureDefaults();
             w.Player.ShowChatNotification(
-                $"Player Status Strip: layout reloaded ({StatusStripLayoutConfig.LayoutConfigFileName}). " +
+                $"Player Status HUD: layout reloaded ({StatusStripLayoutConfig.LayoutConfigFileName}). " +
                 $"HUD {_layout.DialogArea} off=({_layout.DialogOffsetX:F0},{_layout.DialogOffsetY:F0}) size=({_layout.DialogWidth:F0}x{_layout.DialogHeight:F0}); " +
                 $"strip off=({_layout.StatusStripOffsetX:F0},{_layout.StatusStripOffsetY:F0}) side={_layout.StatusStripSide} anchor={_layout.StatusStripAnchorMode} valign={_layout.StatusStripVerticalAlign}; " +
                 $"anchorPx={_layout.AnchorWidthPx} anchorH={(_layout.StatusStripAnchorHeightPx > 0 ? _layout.StatusStripAnchorHeightPx.ToString() : "same")} outerW={(_layout.StatusStripAnchorOuterWidthPx > 0 ? _layout.StatusStripAnchorOuterWidthPx.ToString() : "bounds")}; " +
@@ -164,13 +165,54 @@ public sealed class StatusStripHudElement : HudElement
         }
     }
 
+    internal void ApplyLayoutPreview(StatusStripLayoutConfig layout)
+    {
+        _layout = layout;
+        _layout.EnsureDefaults();
+        ComposeHud();
+        ResetStripTransientState();
+
+        if (TryOpen() != true)
+        {
+            capi.Logger.Warning("[Player Status HUD] HUD TryOpen failed after layout preview.");
+        }
+    }
+
     private void ComposeHud()
     {
         GuiComposer? previous = SingleComposer;
-        ElementBounds dialogBounds = _layout.DialogBounds();
+        ElementBounds dialogBounds = ResolveDialogBounds();
         GuiComposer composer = capi.Gui.CreateCompo("playerstatusstrip-hud", dialogBounds);
         SingleComposer = composer.Compose();
         previous?.Dispose();
+    }
+
+    private ElementBounds ResolveDialogBounds()
+    {
+        (double effW, double effH) = EffectiveContainerSize();
+        if (StatusStripScreenPlacement.TryResolveBounds(
+                _layout.DialogArea,
+                _layout.DialogOffsetX,
+                _layout.DialogOffsetY,
+                effW,
+                effH,
+                capi.Render.FrameWidth,
+                capi.Render.FrameHeight,
+                RuntimeEnv.GUIScale,
+                out (double X, double Y, double Width, double Height) b))
+        {
+            return ElementBounds.Fixed(b.X, b.Y, b.Width, b.Height);
+        }
+
+        return _layout.DialogBounds();
+    }
+
+    private (double Width, double Height) EffectiveContainerSize()
+    {
+        double icon = Math.Max(1, _layout.StatusIconSize);
+        double w = Math.Max(_layout.DialogWidth, icon);
+        double h = Math.Max(_layout.DialogHeight, icon);
+        return (w, h);
     }
 
     private void ResetStripTransientState()
@@ -196,22 +238,46 @@ public sealed class StatusStripHudElement : HudElement
     {
         _layout.EnsureDefaults();
         int anchor = _layout.AnchorWidthPx;
+        string runtimeSide = StripLayoutWizardStripSide.ForDialogArea(_layout.DialogArea);
+        string runtimeVAlign = VerticalAlignForDialogArea(_layout.DialogArea);
         return StatusStripLayoutMath.Compute(
             root.renderX,
             root.renderY,
             root.OuterWidth,
+            root.OuterHeight,
             anchor,
             _layout.StatusIconSize,
             _layout.StatusIconGapPx,
-            _layout.StatusStripSide,
-            _layout.StatusStripOffsetX,
-            _layout.StatusStripOffsetY,
+            runtimeSide,
+            0,
+            0,
             _layout.StatusStripAnchorMode,
-            _layout.StatusStripVerticalAlign,
+            runtimeVAlign,
             activeCount,
             _layout.StatusStripAnchorHeightPx,
             _layout.StatusStripAnchorOuterWidthPx,
-            _layout.UseTrailingEdgeStatusStripAlign());
+            true);
+    }
+
+    private static string VerticalAlignForDialogArea(string? dialogArea)
+    {
+        if (string.IsNullOrWhiteSpace(dialogArea))
+        {
+            return "top";
+        }
+
+        string a = dialogArea.Trim();
+        if (a.EndsWith("Bottom", StringComparison.OrdinalIgnoreCase))
+        {
+            return "bottom";
+        }
+
+        if (a.EndsWith("Middle", StringComparison.OrdinalIgnoreCase))
+        {
+            return "center";
+        }
+
+        return "top";
     }
 
     private StatusStripLayoutConfig.StatusAnimProfileConfig ProfileConfigFor(StatusAffectKind kind)
@@ -255,15 +321,25 @@ public sealed class StatusStripHudElement : HudElement
         float updateProgress = Math.Clamp(anim.UpdateElapsed / p.UpdateDurationSec, 0f, 1f);
 
         float scale = StatusAnimMath.EnterScale(p.EffectiveKind, enterProgress);
-        if (anim.Updating)
+        if (anim.Updating && p.EffectiveKind != StatusAffectKind.Negative)
         {
             scale *= StatusAnimMath.ComputePulseScale(updateProgress, p.ScaleAmplitude);
         }
 
         float dx = StatusAnimMath.HorizontalShakeOffset(p.EffectiveKind, enterProgress, p.ShakePx);
-        float dy = _layout.LockRowBaseline
-            ? 0f
-            : StatusAnimMath.UpdateVerticalOffset(p.EffectiveKind, updateProgress, p.SlideDownPx);
+
+        float dy = 0f;
+        if (anim.Updating)
+        {
+            if (p.EffectiveKind == StatusAffectKind.Negative)
+            {
+                dx += StatusAnimMath.UpdateHorizontalShakeOffset(updateProgress, p.ShakePx);
+            }
+            else if (!_layout.LockRowBaseline)
+            {
+                dy = StatusAnimMath.UpdateVerticalOffset(p.EffectiveKind, updateProgress, p.SlideDownPx);
+            }
+        }
         return new AnimatedIconPose(scale, dx, dy, 1f);
     }
 
@@ -387,7 +463,7 @@ public sealed class StatusStripHudElement : HudElement
             string id = _active[i].StableId;
             _ = _kindAnim.TryGetValue(id, out KindRuntimeAnim a);
             AnimatedIconPose pose = ResolveActivePose(_active[i].AffectKind, a);
-            TopAlignedSpriteRect(left, top, sz, pose, out double sl, out double st, out double side);
+            CenterAnchoredScaledSpriteRect(left, top, sz, pose, out double sl, out double st, out double side);
             if (mouseX >= sl && mouseX < sl + side && mouseY >= st && mouseY < st + side)
             {
                 pickedIndex = i;
@@ -438,18 +514,18 @@ public sealed class StatusStripHudElement : HudElement
         string statusVtml = _active[pickedIndex].TooltipVtml;
         StripLayoutNumbers strip = BuildStripLayout(root, _active.Count);
         GetIconScreen_LTWH(ref strip, pickedIndex, out double left, out double top, out int sz);
-        const double gapBelowPx = 4;
-        double tipLeft = left;
-        double tipTop = top + sz + gapBelowPx;
-        RenderRichTooltipAt(deltaTime, root, statusVtml, tipLeft, tipTop);
+        bool preferAbove = IsBottomHudAnchor();
+        RenderRichTooltipAt(deltaTime, root, statusVtml, left, top, sz, preferAbove);
     }
 
     private void RenderRichTooltipAt(
         float deltaTime,
         ElementBounds root,
         string vtml,
-        double desiredLeftScreenX,
-        double desiredTopScreenY)
+        double iconLeftScreenX,
+        double iconTopScreenY,
+        int iconSize,
+        bool preferAbove)
     {
         EnsureStatusTooltipElements(root);
         if (_statusTooltipRich == null || _statusTooltipPanel == null)
@@ -496,10 +572,24 @@ public sealed class StatusStripHudElement : HudElement
             return;
         }
 
-        double screenX = desiredLeftScreenX;
-        double screenY = desiredTopScreenY;
+        const double gapPx = 4;
+        double belowY = iconTopScreenY + iconSize + gapPx;
+        double aboveY = iconTopScreenY - gapPx - bh;
+        double screenX = iconLeftScreenX;
+        double screenY = preferAbove ? aboveY : belowY;
         double totalW = bw;
         double totalH = bh;
+
+        // Flip side when preferred placement does not fit in current viewport.
+        if (preferAbove && screenY < 0)
+        {
+            screenY = belowY;
+        }
+        else if (!preferAbove && screenY + totalH > capi.Render.FrameHeight)
+        {
+            screenY = aboveY;
+        }
+
         if (screenX + totalW > capi.Render.FrameWidth)
         {
             screenX = capi.Render.FrameWidth - totalW;
@@ -544,6 +634,13 @@ public sealed class StatusStripHudElement : HudElement
         _statusTooltipRich.Bounds = tb;
         _statusTooltipRich.zPos = zTxt;
         _statusTooltipRich.RenderInteractiveElements(deltaTime);
+    }
+
+    private bool IsBottomHudAnchor()
+    {
+        string? area = _layout.DialogArea;
+        return !string.IsNullOrWhiteSpace(area)
+            && area.Trim().EndsWith("Bottom", StringComparison.OrdinalIgnoreCase);
     }
 
     private Dictionary<string, SavedIconRect> CollectIconRects(ref StripLayoutNumbers strip)
@@ -737,10 +834,13 @@ public sealed class StatusStripHudElement : HudElement
             if (PulseMetricTrigger.ShouldPulse(prevM, nowM) && KindPopupSettled(d.StableId))
             {
                 KindRuntimeAnim a = _kindAnim.TryGetValue(d.StableId, out KindRuntimeAnim x) ? x : default;
-                a.AffectKind = d.AffectKind;
-                a.Updating = true;
-                a.UpdateElapsed = 0f;
-                _kindAnim[d.StableId] = a;
+                if (!a.Updating)
+                {
+                    a.AffectKind = d.AffectKind;
+                    a.Updating = true;
+                    a.UpdateElapsed = 0f;
+                    _kindAnim[d.StableId] = a;
+                }
             }
         }
 
@@ -769,7 +869,7 @@ public sealed class StatusStripHudElement : HudElement
         CommitAnimSnapshot(_scratchCurrentIds, rects);
     }
 
-    private void DrawStatusIconTopAligned(
+    private void DrawStatusIconScaledCenterAnchored(
         int texId,
         double cellLeft,
         double cellTop,
@@ -777,7 +877,7 @@ public sealed class StatusStripHudElement : HudElement
         in AnimatedIconPose pose,
         float z)
     {
-        TopAlignedSpriteRect(cellLeft, cellTop, cellSize, pose, out double sl, out double st, out double side);
+        CenterAnchoredScaledSpriteRect(cellLeft, cellTop, cellSize, pose, out double sl, out double st, out double side);
         Vec4f tint = pose.Alpha >= 0.999f ? WhiteTint : new Vec4f(1f, 1f, 1f, pose.Alpha);
         capi.Render.Render2DTexture(texId, (float)sl, (float)st, (float)side, (float)side, z, tint);
     }
@@ -830,7 +930,7 @@ public sealed class StatusStripHudElement : HudElement
             GetIconScreen_LTWH(ref strip, i, out double x, out double yDraw, out int sz);
             _ = _kindAnim.TryGetValue(d.StableId, out KindRuntimeAnim anim);
             AnimatedIconPose pose = ResolveActivePose(d.AffectKind, anim);
-            DrawStatusIconTopAligned(texId, x, yDraw, sz, pose, z);
+            DrawStatusIconScaledCenterAnchored(texId, x, yDraw, sz, pose, z);
         }
 
         float zPop = z + 2f;
@@ -851,7 +951,7 @@ public sealed class StatusStripHudElement : HudElement
 
             double cellLeft = p.CenterX - p.BaselineSize * 0.5;
             double cellTop = p.CenterY - p.BaselineSize * 0.5;
-            DrawStatusIconTopAligned(texId, cellLeft, cellTop, p.BaselineSize, pose, zPop);
+            DrawStatusIconScaledCenterAnchored(texId, cellLeft, cellTop, p.BaselineSize, pose, zPop);
         }
     }
 

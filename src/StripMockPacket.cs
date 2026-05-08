@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using Vintagestory.API.Config;
 
 namespace PlayerStatusStrip;
@@ -19,7 +19,7 @@ internal static class StripMockListText
         StringBuilder sb = new();
         foreach (System.Collections.Generic.KeyValuePair<string, MockScenarioDefinition> kv in MockScenarioCatalog.All)
         {
-            sb.Append(kv.Key).Append(" — ").Append(Lang.Get(kv.Value.TitleLangKey)).Append('\n');
+            sb.Append(kv.Key).Append(" тАФ ").Append(Lang.Get(kv.Value.TitleLangKey)).Append('\n');
         }
 
         sb.Append(Lang.Get("playerstatusstrip:mock-cmd-help-footer"));

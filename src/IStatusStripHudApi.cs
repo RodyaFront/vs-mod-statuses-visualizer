@@ -1,4 +1,4 @@
-namespace PlayerStatusStrip;
+﻿namespace PlayerStatusStrip;
 
 public interface IStatusStripHudApi
 {
@@ -7,4 +7,6 @@ public interface IStatusStripHudApi
     void RegisterProvider(IStatusStripProvider provider);
 
     void UnregisterProvider(IStatusStripProvider provider);
+
+    void SetPreviewExclusiveProvider(IStatusStripProvider? provider);
 }

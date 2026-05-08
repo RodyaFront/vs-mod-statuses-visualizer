@@ -1,4 +1,4 @@
-namespace PlayerStatusStrip;
+﻿namespace PlayerStatusStrip;
 
 internal readonly struct StripLayoutNumbers
 {
@@ -28,6 +28,7 @@ internal static class StatusStripLayoutMath
         double rootRenderX,
         double rootRenderY,
         double rootOuterWidth,
+        double rootOuterHeight,
         int anchorWidthPx,
         int statusIconSizeOrZero,
         int gapPx,
@@ -47,31 +48,37 @@ internal static class StatusStripLayoutMath
         int gap = gapPx;
 
         double stripLeft;
-        if (IsStripLeft(stripSide) && activeCount > 0)
+        if (IsStripCenter(stripSide))
         {
             double span = activeCount * sz + System.Math.Max(0, activeCount - 1) * gap;
-            if (alignStatusRowToTrailingEdge)
-            {
-                stripLeft = rootRenderX + outer - stripOffsetX - span;
-            }
-            else
-            {
-                stripLeft = rootRenderX - stripOffsetX - span;
-            }
+            // Center model: center the full row inside the container.
+            stripLeft = rootRenderX + (outer - span) * 0.5 + stripOffsetX;
+        }
+        else if (IsStripLeft(stripSide))
+        {
+            double span = activeCount * sz + System.Math.Max(0, activeCount - 1) * gap;
+            // Edge model: for right-edge anchors the row grows inward to the left.
+            stripLeft = rootRenderX + outer - stripOffsetX - span;
         }
         else
         {
-            double anchorW = AnchorWidth(outer, anchorWidthPx, anchorMode);
-            stripLeft = rootRenderX + anchorW + stripOffsetX;
+            // Edge model: for left-edge anchors the row grows inward to the right.
+            stripLeft = rootRenderX + stripOffsetX;
         }
 
-        double yBase = StripOriginY(rootRenderY, anchorH, sz, stripOffsetY, verticalAlign);
+        double effectiveH = rootOuterHeight > 0 ? rootOuterHeight : anchorH;
+        double yBase = StripOriginY(rootRenderY, effectiveH, sz, stripOffsetY, verticalAlign);
         return new StripLayoutNumbers(anchorWidthPx, sz, gap, stripLeft, yBase);
     }
 
     internal static bool IsStripLeft(string? side)
     {
         return string.Equals(side?.Trim(), "Left", System.StringComparison.OrdinalIgnoreCase);
+    }
+
+    internal static bool IsStripCenter(string? side)
+    {
+        return string.Equals(side?.Trim(), "Center", System.StringComparison.OrdinalIgnoreCase);
     }
 
     internal static double AnchorWidth(double outer, int anchorPx, string anchorMode)
@@ -85,20 +92,15 @@ internal static class StatusStripLayoutMath
         };
     }
 
-    internal static double StripOriginY(double rootY, int anchorHeightPx, int iconHeight, double stripOffsetY, string verticalAlign)
+    internal static double StripOriginY(double rootY, double containerHeight, int iconHeight, double stripOffsetY, string verticalAlign)
     {
-        double y = rootY;
-        switch (verticalAlign.Trim().ToLowerInvariant())
+        string va = verticalAlign?.Trim().ToLowerInvariant() ?? "top";
+        return va switch
         {
-            case "center":
-                y += (anchorHeightPx - iconHeight) / 2.0;
-                break;
-            case "bottom":
-                y += anchorHeightPx - iconHeight;
-                break;
-        }
-
-        return y + stripOffsetY;
+            "bottom" => rootY + System.Math.Max(0, containerHeight - iconHeight) + stripOffsetY,
+            "center" => rootY + System.Math.Max(0, (containerHeight - iconHeight) * 0.5) + stripOffsetY,
+            _ => rootY + stripOffsetY
+        };
     }
 
     internal static void IconRect(

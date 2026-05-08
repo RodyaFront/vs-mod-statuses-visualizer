@@ -1,0 +1,9 @@
+# Build artifacts
+bin/
+obj/
+**/bin/
+**/obj/
+
+# Generated release archives
+release/*.zip
+releases/*.zip

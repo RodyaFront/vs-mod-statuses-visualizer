@@ -45,4 +45,23 @@ public sealed class StatusStripMergeTests
         Assert.Equal("c", dest[1].StableId);
         Assert.Equal("b", dest[2].StableId);
     }
+
+    [Fact]
+    public void Merge_ReportIncludesDuplicateWinnerInfo()
+    {
+        var a1 = new StatusDescriptor("x", Icon("first.png"), 0, "a");
+        var a2 = new StatusDescriptor("x", Icon("second.png"), 0, "b");
+        IStatusStripProvider[] list = { new Provider(a1), new Provider(a2) };
+        var dest = new List<StatusDescriptor>();
+        var report = new StatusStripMergeReport();
+
+        StatusStripMerge.MergeInto(list, null!, 0f, dest, report);
+
+        Assert.Single(report.DuplicateOverwrites);
+        Assert.Equal("x", report.DuplicateOverwrites[0].StableId);
+        Assert.Equal(nameof(Provider), report.DuplicateOverwrites[0].ReplacedProvider);
+        Assert.Equal(nameof(Provider), report.DuplicateOverwrites[0].WinnerProvider);
+        Assert.Equal(2, report.InputStatusCount);
+        Assert.Equal(1, report.OutputStatusCount);
+    }
 }

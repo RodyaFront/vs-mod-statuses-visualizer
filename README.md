@@ -16,6 +16,7 @@ Current version: `0.1.23`
 ## Documentation
 
 - [API reference and integration guide](docs/PLAYER_STATUS_STRIP_API.md)
+- [Integration cookbook](docs/INTEGRATION_COOKBOOK.md)
 - [Architecture baseline](docs/ARCHITECTURE.md)
 - [Architecture decision record](docs/DECISIONS/ADR-0001-architecture-baseline.md)
 - [Local dev environment setup](docs/DEV_ENV.md)

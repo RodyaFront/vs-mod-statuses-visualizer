@@ -24,6 +24,12 @@ public class StatusStripDevConfig
     /// </summary>
     public bool AlwaysAutoLayoutWizard { get; set; }
 
+    /// <summary>
+    /// Enables diagnostics warnings for duplicate IDs, unstable stable-id continuity, and noisy pulse metrics.
+    /// Applies only when <see cref="DevMode"/> is true.
+    /// </summary>
+    public bool EnableDiagnosticsWarnings { get; set; } = true;
+
     public static StatusStripDevConfig LoadOrCreate(ICoreAPI api)
     {
         string dir = api.GetOrCreateDataPath("ModConfig");

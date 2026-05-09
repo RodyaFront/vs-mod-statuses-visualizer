@@ -166,6 +166,7 @@ public class PlayerStatusStripModSystem : ModSystem
         _api = new StatusStripHudApi();
         _stripLayoutChatService = new StripLayoutChatCommandService(api, () => _hud, OpenLayoutWizardFromMenu, NotifyStripMock);
         StatusStripDevConfig dev = StatusStripDevConfig.LoadOrCreate(api);
+        _api.SetDiagnosticsWarningsEnabled(dev.DevMode && dev.EnableDiagnosticsWarnings);
         _stripLayoutOutgoingChat = (int _, ref string message, ref global::Vintagestory.API.Common.EnumHandling handled) =>
         {
             if (_stripLayoutChatService == null || !_stripLayoutChatService.TryHandle(ref message, ref handled))

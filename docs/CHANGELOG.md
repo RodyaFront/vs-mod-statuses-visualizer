@@ -15,11 +15,14 @@ Release baseline verified on ModDB: `https://mods.vintagestory.at/playerstatusst
 - Rendering/runtime boundary: isolated wizard preview provider lifecycle into a dedicated preview session helper.
 - Docs: added architecture baseline (`docs/ARCHITECTURE.md`), ADR (`docs/DECISIONS/ADR-0001-architecture-baseline.md`), and local environment setup guide (`docs/DEV_ENV.md`).
 - Build/dev ergonomics: added `Directory.Build.props` fallback for `VINTAGE_STORY` path when the environment variable is missing.
+- API DX: documented provider quickstart, common integration mistakes, and status-id naming conventions in `docs/PLAYER_STATUS_STRIP_API.md` and `docs/INTEGRATION_COOKBOOK.md`.
+- API/runtime diagnostics: added optional diagnostics API (`IStatusStripDiagnosticsApi`) with per-provider merge/duplicate stats and runtime signals for unstable ids/pulse churn in dev mode.
+- Config: added `EnableDiagnosticsWarnings` to `playerstatusstrip-dev.json` so warning noise can be tuned without disabling diagnostics snapshots.
 
 ### Verification
 
 - IDE diagnostics are clean for touched files.
-- `dotnet test -c Release -p:UseSharedCompilation=false PlayerStatusStrip.Tests/PlayerStatusStrip.Tests.csproj` passes (`39/39`).
+- `dotnet test -c Release -p:UseSharedCompilation=false PlayerStatusStrip.Tests/PlayerStatusStrip.Tests.csproj` passes (`41/41`).
 - `dotnet build -c Release PlayerStatusStrip.csproj` succeeds (`0` errors, `0` warnings).
 
 ## 1.0.1

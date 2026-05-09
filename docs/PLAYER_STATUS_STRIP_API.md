@@ -40,6 +40,54 @@
 
 4. On unload or when your logic stops, call `UnregisterProvider(myProvider)` to avoid leaks.
 
+## Provider quickstart (copy-paste)
+
+Use the full cookbook for production-ready examples: `docs/INTEGRATION_COOKBOOK.md`.
+
+Minimal shape:
+
+```csharp
+var stripSystem = api.ModLoader.GetModSystem<PlayerStatusStrip.PlayerStatusStripModSystem>();
+IStatusStripHudApi? stripApi = stripSystem?.StatusApi;
+if (stripApi == null) return;
+
+var provider = new MyStatusProvider();
+stripApi.RegisterProvider(provider);
+// later on shutdown:
+stripApi.UnregisterProvider(provider);
+```
+
+Provider output checklist:
+
+- Keep `StableId` stable across frames.
+- Prefix IDs with your own mod id.
+- Keep `SortOrder` deterministic.
+- Use `PulseMetric` only when value-driven pulse is desired.
+- Use `AffectKind` to communicate semantic sign (`Positive` / `Negative` / `Neutral`).
+
+## Common mistakes
+
+| Symptom | Likely cause | Fix |
+|---|---|---|
+| Status flickers or reappears each frame | Unstable `StableId` | Use durable ids (`modid:domain-status-name`) |
+| Status disappears with another integration loaded | ID collision | Namespace ids with your mod prefix |
+| Status remains after unload | Provider still registered | Always call `UnregisterProvider` |
+| Excessive pulse animation | Noisy `PulseMetric` | Debounce or smooth the metric |
+
+## ID naming convention
+
+Recommended format:
+
+- `modid:domain-status-name`
+
+Examples:
+
+- Good: `slowtoxvisualized:tox-poison`
+- Good: `mymod:food-well-fed`
+- Bad: `WellFed`
+- Bad: `status1`
+- Reserved prefix warning: avoid using `playerstatusstrip:*` unless this mod owns the status.
+
 ## Config files (player data)
 
 Paths are under the Vintage Story **data** folder, file names:
@@ -52,6 +100,19 @@ Paths are under the Vintage Story **data** folder, file names:
 - Prefer depending on **`game`** only; depend on `playerstatusstrip` if you need a known minimum feature set.
 - Check `api.ApiVersion` before relying on new behavior.
 - Internal source layout refactors do not require an API version bump when contract semantics are unchanged.
+
+### Optional diagnostics surface
+
+Diagnostics are exposed via an optional cast to avoid breaking existing consumers:
+
+```csharp
+if (stripApi is IStatusStripDiagnosticsApi diagnosticsApi && diagnosticsApi.DiagnosticsAvailable)
+{
+    StatusStripDiagnosticsSnapshot snapshot = diagnosticsApi.GetDiagnosticsSnapshot();
+}
+```
+
+Runtime diagnostics are intended for dev-mode workflows and can include duplicate-id overwrites, unstable id churn signals, and pulse churn counters.
 
 ## Build reference
 

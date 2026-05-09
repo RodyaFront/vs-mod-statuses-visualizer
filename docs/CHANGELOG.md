@@ -2,7 +2,25 @@
 
 Source of truth version: [`modinfo.json`](../modinfo.json).
 
-Public baseline on ModDB before this release: `1.0.0`.
+Public baseline on ModDB before this release: `1.0.1`.
+
+## Unreleased
+
+Release baseline verified on ModDB: `https://mods.vintagestory.at/playerstatusstrip` (`1.0.1`, released "18 hours ago" at verification time).
+
+### Changed
+
+- Refactor: reorganized `src` into architecture zones (`ApiContracts`, `CoreLogic`, `RenderingUi`, `RuntimeOrchestration`, `DevMock`, `Config`) without changing provider API semantics.
+- Runtime: extracted `.stripmock` and `.striplayout` chat command handling from `PlayerStatusStripModSystem` into dedicated runtime services.
+- Rendering/runtime boundary: isolated wizard preview provider lifecycle into a dedicated preview session helper.
+- Docs: added architecture baseline (`docs/ARCHITECTURE.md`), ADR (`docs/DECISIONS/ADR-0001-architecture-baseline.md`), and local environment setup guide (`docs/DEV_ENV.md`).
+- Build/dev ergonomics: added `Directory.Build.props` fallback for `VINTAGE_STORY` path when the environment variable is missing.
+
+### Verification
+
+- IDE diagnostics are clean for touched files.
+- `dotnet test -c Release -p:UseSharedCompilation=false PlayerStatusStrip.Tests/PlayerStatusStrip.Tests.csproj` passes (`39/39`).
+- `dotnet build -c Release PlayerStatusStrip.csproj` succeeds (`0` errors, `0` warnings).
 
 ## 1.0.1
 

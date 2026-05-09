@@ -3,6 +3,8 @@
 **Mod id:** `playerstatusstrip`  
 **Current `IStatusStripHudApi.ApiVersion`:** `1` (bump when breaking the contract).
 
+**Architecture baseline:** see `docs/ARCHITECTURE.md` and `docs/DECISIONS/ADR-0001-architecture-baseline.md`.
+
 ## What the base mod does
 
 - Renders a horizontal strip of status icons with pop-in, pulse, pop-out, and optional wave offset.
@@ -49,6 +51,7 @@ Paths are under the Vintage Story **data** folder, file names:
 
 - Prefer depending on **`game`** only; depend on `playerstatusstrip` if you need a known minimum feature set.
 - Check `api.ApiVersion` before relying on new behavior.
+- Internal source layout refactors do not require an API version bump when contract semantics are unchanged.
 
 ## Build reference
 

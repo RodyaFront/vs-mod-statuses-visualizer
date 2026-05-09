@@ -16,6 +16,9 @@ Current version: `0.1.23`
 ## Documentation
 
 - [API reference and integration guide](docs/PLAYER_STATUS_STRIP_API.md)
+- [Architecture baseline](docs/ARCHITECTURE.md)
+- [Architecture decision record](docs/DECISIONS/ADR-0001-architecture-baseline.md)
+- [Local dev environment setup](docs/DEV_ENV.md)
 - [Dev/testing guide and release checklist](docs/PLAYER_STATUS_STRIP_DEV_GUIDE.md)
 - [ModDB release draft (RU/EN)](docs/MODDB_RELEASE_v0.1.23.md)
 - [Landing page HTML (ModDB style)](docs/mod-landing.html)

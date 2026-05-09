@@ -18,6 +18,7 @@ public sealed class StripLayoutWizardDialog : GuiDialog
     private readonly StatusStripHudElement _hud;
     private readonly IStatusStripHudApi _hudApi;
     private readonly StripLayoutWizardPreviewProvider _previewProvider = new();
+    private readonly StripLayoutWizardPreviewSession _previewSession;
     private readonly string[] _areaCodes;
     private readonly string[] _areaDisplay;
     private readonly string[] _insetCodes;
@@ -37,8 +38,7 @@ public sealed class StripLayoutWizardDialog : GuiDialog
     {
         _hud = hud;
         _hudApi = hudApi;
-        _hudApi.RegisterProvider(_previewProvider);
-        _hudApi.SetPreviewExclusiveProvider(_previewProvider);
+        _previewSession = new StripLayoutWizardPreviewSession(_hudApi, _previewProvider);
         StatusStripLayoutConfig baseline = StatusStripLayoutConfig.Reload(capi);
         baseline.EnsureDefaults();
         _areaCodes = new[]
@@ -522,8 +522,7 @@ public sealed class StripLayoutWizardDialog : GuiDialog
         bool ok = base.TryClose();
         if (ok)
         {
-            _hudApi.SetPreviewExclusiveProvider(null);
-            _hudApi.UnregisterProvider(_previewProvider);
+            _previewSession.Dispose();
             if (!_layoutAppliedFromWizard)
             {
                 _hud.ReloadLayoutFromDisk(showLayoutSummaryChat: false);

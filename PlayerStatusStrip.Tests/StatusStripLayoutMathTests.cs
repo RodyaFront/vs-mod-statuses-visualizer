@@ -11,6 +11,7 @@ public sealed class StatusStripLayoutMathTests
             rootRenderX: 100,
             rootRenderY: 20,
             rootOuterWidth: 200,
+            rootOuterHeight: 0,
             anchorWidthPx: 32,
             statusIconSizeOrZero: 0,
             gapPx: 4,
@@ -22,7 +23,7 @@ public sealed class StatusStripLayoutMathTests
             activeCount: 3);
 
         double span = 3 * 32 + 2 * 4;
-        Assert.Equal(100 - 4 - span, n.StripLeft, 5);
+        Assert.Equal(100 + 200 - 4 - span, n.StripLeft, 5);
         Assert.Equal(32, n.Sz);
         Assert.Equal(4, n.Gap);
         Assert.Equal(22, n.YBase, 5);
@@ -35,6 +36,7 @@ public sealed class StatusStripLayoutMathTests
             rootRenderX: 100,
             rootRenderY: 0,
             rootOuterWidth: 200,
+            rootOuterHeight: 0,
             anchorWidthPx: 32,
             statusIconSizeOrZero: 0,
             gapPx: 4,
@@ -45,7 +47,7 @@ public sealed class StatusStripLayoutMathTests
             verticalAlign: "top",
             activeCount: 2);
 
-        Assert.Equal(100 + 32 + 6, n.StripLeft, 5);
+        Assert.Equal(100 + 6, n.StripLeft, 5);
     }
 
     [Fact]
@@ -87,6 +89,7 @@ public sealed class StatusStripLayoutMathTests
             rootRenderX: 100,
             rootRenderY: 0,
             rootOuterWidth: 20,
+            rootOuterHeight: 0,
             anchorWidthPx: 32,
             statusIconSizeOrZero: 0,
             gapPx: 4,
@@ -99,7 +102,7 @@ public sealed class StatusStripLayoutMathTests
             anchorHeightPxOrZero: 0,
             anchorOuterWidthPxOrZero: 80);
 
-        Assert.Equal(100 + 80, n.StripLeft, 5);
+        Assert.Equal(100, n.StripLeft, 5);
     }
 
     [Fact]
@@ -109,6 +112,7 @@ public sealed class StatusStripLayoutMathTests
             rootRenderX: 0,
             rootRenderY: 10,
             rootOuterWidth: 200,
+            rootOuterHeight: 0,
             anchorWidthPx: 32,
             statusIconSizeOrZero: 16,
             gapPx: 4,
@@ -138,6 +142,7 @@ public sealed class StatusStripLayoutMathTests
             rootRenderX: rootX,
             rootRenderY: 20,
             rootOuterWidth: outerW,
+            rootOuterHeight: 0,
             anchorWidthPx: 32,
             statusIconSizeOrZero: 0,
             gapPx: gap,

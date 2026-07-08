@@ -25,7 +25,7 @@
 2. Implement `IStatusStripProvider`:
 
    - `void Collect(ICoreClientAPI capi, float deltaTime, List<StatusDescriptor> dest)`  
-     **Append** your slots to `dest` (the base mod clears its scratch list before calling you). Use `deltaTime` for time-based mock or smoothing if needed.
+     **Add** your slots to `dest` (the base mod clears its scratch list before calling you). Use `deltaTime` for time-based mock or smoothing if needed.
 
 3. `StatusDescriptor` fields:
 

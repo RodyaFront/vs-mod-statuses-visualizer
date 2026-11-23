@@ -4,7 +4,7 @@
   "name": "Player Status Strip",
   "authors": ["Teotale"],
   "description": "Base HUD mod: renders a configurable strip of player status icons from registered providers.",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "dependencies": {
     "game": "*"
   }

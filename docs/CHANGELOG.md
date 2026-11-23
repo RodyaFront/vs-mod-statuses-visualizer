@@ -4,9 +4,15 @@ Source of truth version: [`modinfo.json`](../modinfo.json).
 
 Public baseline on ModDB before this release: `1.0.1`.
 
-## Unreleased
+## 1.0.2
+
+Release date: 2026-11-23.
 
 Release baseline verified on ModDB: `https://mods.vintagestory.at/playerstatusstrip` (`1.0.1`, released "18 hours ago" at verification time).
+
+### Fixed
+
+- Packaging: release zip entries now use `/` path separators. Previous archives used `\`, so on Linux the `playerstatusstrip` asset domain never registered (no icons, no lang files). Release archives are built with `scripts/package-release.ps1`.
 
 ### Changed
 
